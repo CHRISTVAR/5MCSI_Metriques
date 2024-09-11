@@ -7,3 +7,59 @@
     <h2>Mon Graphique</h2>
 </body>
 </html>
+Etape 1.2 : Création d'une nouvelle route Créez à présent une nouvelle route afin de pouvoir consulter votre fichier HTML depuis votre site en ligne. Pour cela, ajouter le code ci-dessous dans votre fichier __init__.py :
+
+
+@app.route("/rapport/")
+def mongraphique():
+    return render_template("graphique.html")
+Notions acquises dans cet exercice : Nous avons vu lors de cet exercice comment créer et où déposer les fichiers HTML lorsque l'on utise le Framework Flask. Nous avons également découvert que les Framework (cadre de travail) nous imposent une structure de travail où chaque élément doit être à sa place.
+
+- - - - -
+
+Exercice 3 Ter : Transfert de données
+Mettons à présent ces valeurs sous la forme d'un graphique qui sera pour l'utilisateur bien plus agréable et facile à lire. Pour cela, nous devons utiliser les données de notre nouvelle API /rapport/ et les injecter dans notre fichier graphique.html. Nous allons utiliser une bibliothèque open source fournie par Google pour créer ce graphique.
+
+Modifier votre précédent fichier graphique.html dans GitHUB et remplacer son code par celui-ci :
+
+
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Metrique</title>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  </head>
+  <body>
+    <div id="chart_div"></div>
+    <script>
+      google.charts.load('current', { packages: ['corechart'] });
+      google.charts.setOnLoadCallback(drawBackgroundColor);
+     function drawBackgroundColor() {
+    function drawChart(data) {
+    // Convertir les données récupérées en un tableau utilisable par Google Charts
+    var dataTable = new google.visualization.DataTable();
+    dataTable.addColumn('string', 'Date');
+    dataTable.addColumn('number', 'Valeur');
+    data.results.forEach(entry => {
+      var date = new Date(entry.Jour * 1000);
+      dataTable.addRow([date.toLocaleDateString(), entry.temp]);
+    });
+    // Configurer les options du graphique en ligne
+    var options = {
+      title: 'Évolution des températures de la ville de Tawarano',
+      curveType: 'function',
+      legend: { position: 'bottom' }
+    };
+    var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+    chart.draw(dataTable, options);
+  }
+  // Récupération de données depuis notre API /tawarano/
+  fetch('/tawarano/')
+    .then(response => response.json())
+    .then(data => {
+      drawChart(data);
+    })
+}
+    </script>
+  </body>
+</html>
