@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Commits par Jour</title>
+    <title>Commits par Minute</title>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <style>
         body {
@@ -24,7 +24,7 @@
 <body>
 
 <div class="container">
-    <h1>Nombre de commits par jour</h1>
+    <h1>Nombre de commits par minute</h1>
     <div id="chart_div" style="width: 100%; height: 500px;"></div>
 </div>
 
@@ -37,42 +37,48 @@
         fetch('https://api.github.com/repos/christvar/5MCSI_Metriques/commits')
             .then(response => response.json())
             .then(data => {
-                const commitsByDay = {};
+                const commitsByMinute = {};
 
                 // Parcourir chaque commit et extraire la date
-                data.forEach(commitData => {
-                    const commitDate = new Date(commitData.commit.author.date);
-                    const dateString = commitDate.toISOString().split('T')[0]; // Format YYYY-MM-DD
+                Promise.all(data.map(commitData => {
+                    const commitDate = commitData.commit.author.date;
                     
-                    // Compter le nombre de commits par jour
-                    if (!commitsByDay[dateString]) {
-                        commitsByDay[dateString] = 1;
-                    } else {
-                        commitsByDay[dateString]++;
+                    // Appel à l'API Flask pour extraire les minutes du commit
+                    return fetch(`/extract-minutes/${encodeURIComponent(commitDate)}`)
+                        .then(response => response.json())
+                        .then(result => {
+                            const minute = result.minutes;
+
+                            // Compter le nombre de commits par minute
+                            if (!commitsByMinute[minute]) {
+                                commitsByMinute[minute] = 1;
+                            } else {
+                                commitsByMinute[minute]++;
+                            }
+                        });
+                })).then(() => {
+                    // Préparer les données pour le graphique
+                    const dataArray = [['Minute', 'Commits']];
+                    for (const minute in commitsByMinute) {
+                        dataArray.push([minute, commitsByMinute[minute]]);
                     }
+
+                    var dataTable = google.visualization.arrayToDataTable(dataArray);
+
+                    var options = {
+                        title: 'Nombre de commits minute par minute',
+                        hAxis: {title: 'Minute', slantedText: true, slantedTextAngle: 45},
+                        vAxis: {title: 'Nombre de commits'},
+                        legend: {position: 'none'},
+                        backgroundColor: '#f1f8e9',
+                        curveType: 'function', // Lissage de la courbe
+                        pointSize: 5 // Taille des points sur la courbe
+                    };
+
+                    // Remplacement par LineChart pour un graphique en courbe
+                    var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+                    chart.draw(dataTable, options);
                 });
-
-                // Préparer les données pour le graphique
-                const dataArray = [['Date', 'Commits']];
-                for (const date in commitsByDay) {
-                    dataArray.push([date, commitsByDay[date]]);
-                }
-
-                var dataTable = google.visualization.arrayToDataTable(dataArray);
-
-                var options = {
-                    title: 'Nombre de commits par jour',
-                    hAxis: {title: 'Date', slantedText: true, slantedTextAngle: 45},
-                    vAxis: {title: 'Nombre de commits'},
-                    legend: {position: 'none'},
-                    backgroundColor: '#f1f8e9',
-                    curveType: 'function', // Lissage de la courbe
-                    pointSize: 5 // Taille des points sur la courbe
-                };
-
-                // Afficher le graphique
-                var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
-                chart.draw(dataTable, options);
             })
             .catch(error => console.error('Erreur lors de la récupération des données :', error));
     }
