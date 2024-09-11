@@ -34,7 +34,7 @@
 
     function drawChart() {
         // Récupération des commits via l'API GitHub
-        fetch('https://api.github.com/repos/CHRISTVAR/5MCSI_Metriques/commits')
+        fetch('https://api.github.com/repos/christvar/5MCSI_Metriques/commits')
             .then(response => response.json())
             .then(data => {
                 const commitsByDay = {};
@@ -66,12 +66,12 @@
                     vAxis: {title: 'Nombre de commits'},
                     legend: {position: 'none'},
                     backgroundColor: '#f1f8e9',
-                    curveType: 'function', // Lissage de la courbe
-                    pointSize: 5 // Taille des points sur la courbe
+                    bar: {groupWidth: '75%'}, // Largeur des barres dans l'histogramme
+                    histogram: {bucketSize: 1}, // Taille des buckets pour l'histogramme
                 };
 
-                // Afficher le graphique
-                var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+                // Afficher le graphique sous forme d'histogramme
+                var chart = new google.visualization.BarChart(document.getElementById('chart_div'));
                 chart.draw(dataTable, options);
             })
             .catch(error => console.error('Erreur lors de la récupération des données :', error));
